@@ -193,15 +193,15 @@ local get_selected_count = ya.sync(function()
   return #cx.active.selected
 end)
 
---- Returns the Url of the first selected entry, or nil if none selected.
+--- Returns the path of the first selected entry, or nil if none selected.
 local get_selected_path = ya.sync(function()
-  for _, url in pairs(cx.active.selected) do
-    return url
+  for _, file in pairs(cx.active.selected) do
+    return file.url
   end
   return nil
 end)
 
---- Returns the Url of the currently hovered entry, or nil if nothing is hovered.
+--- Returns the path of the currently hovered entry, or nil if nothing is hovered.
 local get_hovered_path = ya.sync(function()
   local hovered = cx.active.current.hovered
   return hovered and hovered.url or nil

@@ -20,7 +20,7 @@ returns to Yazi after it exits.
 
 ### Requirements
 
-- [Yazi](https://yazi-rs.github.io/) 26.5.6(tested) or newer
+- [Yazi](https://yazi-rs.github.io/) v26.8.15 or newer
 - [Git](https://git-scm.com/) in `PATH` for the built-in default
 - Any executable named by a custom command template in `PATH`
 
