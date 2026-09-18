@@ -190,13 +190,19 @@ end
 
 --- Returns the number of currently selected entries.
 local get_selected_count = ya.sync(function()
-  return #cx.active.selected
+  local count = 0
+  for i = 1, #cx.tabs do
+    count = count + #cx.tabs[i].selected
+  end
+  return count
 end)
 
 --- Returns the path of the first selected entry, or nil if none selected.
 local get_selected_path = ya.sync(function()
-  for _, file in pairs(cx.active.selected) do
-    return file.url
+  for i = 1, #cx.tabs do
+    for _, file in pairs(cx.tabs[i].selected) do
+      return file.url
+    end
   end
   return nil
 end)
