@@ -197,20 +197,34 @@ local get_selected_count = ya.sync(function()
   return count
 end)
 
---- Returns the path of the first selected entry, or nil if none selected.
-local get_selected_path = ya.sync(function()
+--- Returns { path, display, is_virtual } for the first selected entry, or nil.
+---
+--- NOTE: `is_virtual` is true for archive, remote (sftp) and other non-local
+--- kinds. Their `.path` is NOT a local path.
+local get_selected_entry = ya.sync(function()
   for i = 1, #cx.tabs do
     for _, file in pairs(cx.tabs[i].selected) do
-      return file.url
+      return {
+        path = tostring(file.url.path),
+        display = tostring(file.url),
+        is_virtual = file.url.spec.is_virtual,
+      }
     end
   end
   return nil
 end)
 
---- Returns the path of the currently hovered entry, or nil if nothing is hovered.
-local get_hovered_path = ya.sync(function()
+--- Returns { path, display, is_virtual } for the currently hovered entry, or nil.
+local get_hovered_entry = ya.sync(function()
   local hovered = cx.active.current.hovered
-  return hovered and hovered.url or nil
+  if not hovered then
+    return nil
+  end
+  return {
+    path = tostring(hovered.url.path),
+    display = tostring(hovered.url),
+    is_virtual = hovered.url.spec.is_virtual,
+  }
 end)
 
 --- Returns the configured command template from the persistent state.
@@ -297,8 +311,8 @@ function M.entry(_, job)
     return notify_warn("Select exactly one entry for diff (currently " .. count .. " selected)")
   end
 
-  local selected = get_selected_path()
-  local hovered = get_hovered_path()
+  local selected = get_selected_entry()
+  local hovered = get_hovered_entry()
   if not selected then
     return notify_warn("No selected entry found")
   end
@@ -306,12 +320,20 @@ function M.entry(_, job)
     return notify_warn("No entry is hovered")
   end
 
+  -- Reject before spawning anything: the risk is not failure but a wrong diff.
+  for _, entry in ipairs({ selected, hovered }) do
+    if entry.is_virtual then
+      log_debug("rejected_virtual", { url = entry.display })
+      return notify_warn("`" .. entry.display .. "` is not on the local filesystem (archive or remote).")
+    end
+  end
+
   local template, valid, source = resolve_request(args)
   if not valid then
     return
   end
 
-  local left, right = tostring(selected), tostring(hovered)
+  local left, right = selected.path, hovered.path
   log_debug("command_resolved", { command_source = source, command = template[1] })
   show_diff(template, left, right)
   if left == right then
